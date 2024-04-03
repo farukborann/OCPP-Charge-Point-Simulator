@@ -1,7 +1,7 @@
-import * as React from 'react';
-import PropTypes from 'prop-types';
-import Box from '@mui/material/Box';
+import * as React from "react";
+import PropTypes from "prop-types";
 
+import Box from "@mui/material/Box";
 
 const TabPanel = (props) => {
   const { children, value, index, ...other } = props;
@@ -14,15 +14,10 @@ const TabPanel = (props) => {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
-}
-
+};
 
 TabPanel.propTypes = {
   children: PropTypes.node,
@@ -30,4 +25,4 @@ TabPanel.propTypes = {
   value: PropTypes.number.isRequired,
 };
 
-export default TabPanel
+export default TabPanel;

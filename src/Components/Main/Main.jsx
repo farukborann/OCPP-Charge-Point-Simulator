@@ -1,4 +1,7 @@
 import React, { useEffect, useContext, useState, useRef } from "react";
+import moment from "moment";
+
+import { MonitorHeartOutlined, Speed, Clear } from "@mui/icons-material";
 import {
   Container,
   Box,
@@ -10,15 +13,6 @@ import {
   Stack,
   Popover,
 } from "@mui/material";
-import ChargePoint from "../ChargePoint/ChargePoint";
-import moment from "moment";
-import Connector from "../Connector/Connector";
-import SettingsContext from "../../Context/SettingsContext";
-import {
-  pointStatus,
-  connectedStatuses,
-} from "../../Config/charge-point-settings";
-import { MonitorHeartOutlined, Speed, Clear } from "@mui/icons-material";
 import {
   logTypes,
   commands,
@@ -26,7 +20,14 @@ import {
   connectorStatus,
   socketInfo,
 } from "../../common/constants";
+import {
+  pointStatus,
+  connectedStatuses,
+} from "../../Config/charge-point-settings";
+import SettingsContext from "../../Context/SettingsContext";
 import { sendCommand } from "../../OCPP/OCPP-Commands";
+import ChargePoint from "../ChargePoint/ChargePoint";
+import Connector from "../Connector/Connector";
 
 let heartbeatInterval;
 let meterValueInterval = {
@@ -73,13 +74,13 @@ const Main = () => {
 
   const showHelpText = (event, type) => {
     const getData = settingsState.stationSettings.filter(
-      x => x.key === type
+      (x) => x.key === type
     )[0];
     setHelpText(`${type} set to ${getData.value} seconds`);
     setHelpAnchorEl(event.target);
   };
 
-  const updateLog = record => {
+  const updateLog = (record) => {
     logArray.push(record);
     setLogs([...logArray]);
   };
@@ -115,7 +116,7 @@ const Main = () => {
   };
 
   const incomingMessage = (id, message) => {
-    const getCommand = commands.filter(x => x.id === id)[0];
+    const getCommand = commands.filter((x) => x.id === id)[0];
 
     if (!getCommand) {
       updateLog({
@@ -160,7 +161,7 @@ const Main = () => {
 
       // Set heartbeat interval
       const index = settingsState.stationSettings.findIndex(
-        x => x.key === "HeartbeatInterval"
+        (x) => x.key === "HeartbeatInterval"
       );
       settingsState.stationSettings[index].value = message.interval;
       heartbeatInterval = setInterval(() => {
@@ -184,7 +185,7 @@ const Main = () => {
       updateConnector[connector]({ ...connectors[connector] });
 
       const index = settingsState.stationSettings.findIndex(
-        x => x.key === "MeterValueSampleInterval"
+        (x) => x.key === "MeterValueSampleInterval"
       );
 
       meterValueInterval[connector] = setInterval(() => {
@@ -198,13 +199,15 @@ const Main = () => {
           currentMeterValue: connectors[connector].currentMeterValue,
         };
 
+        const result = sendCommand("MeterValues", metaData);
+        centralSystemSend(result.ocppCommand, result.lastCommand);
+      }, settingsState.stationSettings[index].value * 1000);
 
-        const result = sendCommand('MeterValues', metaData)
-        centralSystemSend(result.ocppCommand, result.lastCommand)
-      }, settingsState.stationSettings[index].value * 1000)
-
-      const statusData = sendCommand('StatusNotification', { connectorId: connector, status: connectors[connector].status })
-      centralSystemSend(statusData.ocppCommand, statusData.lastCommand)
+      const statusData = sendCommand("StatusNotification", {
+        connectorId: connector,
+        status: connectors[connector].status,
+      });
+      centralSystemSend(statusData.ocppCommand, statusData.lastCommand);
     }
 
     if (
@@ -279,6 +282,7 @@ const Main = () => {
         metaData.currentMeterValue = connectors[connId].currentMeterValue;
         metaData.transactionId = connectors[connId].transactionId;
         metaData.stopReason = connectors[connId].stopReason;
+        metaData.idTag = connectors[connId].idTag;
         const endTransaction = sendCommand("StopTransaction", metaData);
         centralSystemSend(
           endTransaction.ocppCommand,
@@ -311,7 +315,7 @@ const Main = () => {
         break;
       case "UnlockConnector":
         const getSetting = settingsState.stationSettings.findIndex(
-          x => x.key === "UnlockConnectorOnEVSideDisconnect"
+          (x) => x.key === "UnlockConnectorOnEVSideDisconnect"
         );
         if (
           getSetting === -1 ||
@@ -340,7 +344,7 @@ const Main = () => {
 
         for (let key of payload.key) {
           const findSetting = settingsState.stationSettings.findIndex(
-            x => x.key === key
+            (x) => x.key === key
           );
 
           if (findSetting === -1) {
@@ -363,7 +367,7 @@ const Main = () => {
         const { key, value } = payload;
         let changeValueStatus = "Accepted";
         const findSetting = settingsState.stationSettings.findIndex(
-          x => x.key === key
+          (x) => x.key === key
         );
         if (findSetting === -1) changeValueStatus = "NotSupported";
 
@@ -425,7 +429,7 @@ const Main = () => {
       centralSystemSend(initialBoot.ocppCommand, initialBoot.lastCommand);
     };
 
-    ws.onclose = event => {
+    ws.onclose = (event) => {
       let status = pointStatus.disconnected;
       if (event.code === 1006) {
         updateLog({
@@ -451,7 +455,7 @@ const Main = () => {
       setWs("");
     };
 
-    ws.onmessage = msg => {
+    ws.onmessage = (msg) => {
       const [type, id, message, payload] = JSON.parse(msg.data);
       switch (type) {
         case 2:
@@ -535,14 +539,14 @@ const Main = () => {
                 <Speed
                   sx={{ ml: 1, cursor: "pointer" }}
                   color="primary"
-                  onClick={event =>
+                  onClick={(event) =>
                     showHelpText(event, "MeterValueSampleInterval")
                   }
                 />
                 <MonitorHeartOutlined
                   sx={{ ml: 1, cursor: "pointer" }}
                   color="primary"
-                  onClick={event => showHelpText(event, "HeartbeatInterval")}
+                  onClick={(event) => showHelpText(event, "HeartbeatInterval")}
                 />
                 <Tooltip title="Clear log" placement="top" arrow>
                   <Clear
